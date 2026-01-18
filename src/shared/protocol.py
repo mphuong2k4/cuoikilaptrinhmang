@@ -42,7 +42,7 @@ class Message:
     request_id: Optional[str] = None
     version: str = PROTOCOL_VERSION
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]: 
         d: Dict[str, Any] = {
             "v": self.version,
             "type": self.type,
