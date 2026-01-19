@@ -156,8 +156,18 @@ async def run_agent(server_host: str, server_port: int, auth_token: str, name: s
 
     async def send_loop():
         while True:
-            writer.write(dumps({"v": PROTOCOL_VERSION, "type": "heartbeat", "payload": {"t": time.time()}}))
-            writer.write(dumps({"v": PROTOCOL_VERSION, "type": "metrics", "payload": get_metrics()}))
+             writer.write(
+                dumps({
+                    "v": PROTOCOL_VERSION,
+                    "type": "heartbeat",
+                    "payload": {"t": time.time()},
+                }) +
+                dumps({
+                    "v": PROTOCOL_VERSION,
+                    "type": "metrics",
+                    "payload": get_metrics(),
+                })
+            )
             await writer.drain()
             await asyncio.sleep(2.0)
 
