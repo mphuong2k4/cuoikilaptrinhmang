@@ -234,7 +234,7 @@ async def interactive_cli(server: MonitorServer):
 
         print("Unknown command. Type 'help'.")
 
-
+ 
 async def main():
     ap = argparse.ArgumentParser(description="PC Network Monitor - Server")
     ap.add_argument("--host", default="0.0.0.0")
@@ -259,7 +259,7 @@ async def main():
         interactive_cli(server),
     )
 
-
+ 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
