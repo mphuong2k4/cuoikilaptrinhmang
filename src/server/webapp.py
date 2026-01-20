@@ -73,293 +73,278 @@ INDEX_HTML = r"""<!doctype html>
   <title>PC Network Monitor</title>
   <style>
     :root{
-      --bg: #0b1220;
-      --card: rgba(255,255,255,0.06);
-      --card2: rgba(255,255,255,0.08);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.62);
-      --border: rgba(255,255,255,0.10);
-      --accent: #7c9cff;
-      --good: #2bd576;
-      --warn: #ffcc66;
-      --bad: #ff5d5d;
-      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --bg:#070b14;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.09);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --border:rgba(255,255,255,.12);
+      --shadow:0 18px 50px rgba(0,0,0,.45);
+      --radius:16px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      --radius: 14px;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      --accent:#7c9cff;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
     }
 
     *{box-sizing:border-box}
+   nd
     body{
       margin:0;
-      font-family: var(--sans);
-      background: radial-gradient(1200px 700px at 20% 0%, rgba(124,156,255,0.18), transparent 60%),
-                  radial-gradient(900px 600px at 90% 10%, rgba(43,213,118,0.12), transparent 55%),
-                  var(--bg);
-      color: var(--text);
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(124,156,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(52,211,153,.12), transparent 55%),
+        radial-gradient(900px 600px at 70% 90%, rgba(251,113,133,.10), transparent 55%),
+        var(--bg);
     }
 
-    .wrap{
-      max-width: 1220px;
-      margin: 0 auto;
-      padding: 20px 18px 26px;
+    .wrap{max-width:1240px; margin:0 auto; padding:18px 16px 28px;}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      margin-bottom:14px;
     }
+    .brand{display:flex; flex-direction:column; gap:6px;}
+    .brand h1{margin:0; font-size:20px; font-weight:800; letter-spacing:.2px;}
+    .brand .sub{margin:0; font-size:12.5px; color:var(--muted);}
 
-    .top{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap: 16px;
-      margin-bottom: 14px;
+    .rightbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px;
+      background:rgba(255,255,255,.07); border:1px solid var(--border);
+      box-shadow:var(--shadow); color:var(--muted); font-size:13px;
+      white-space:nowrap;
     }
+    .dot{width:9px; height:9px; border-radius:50%; background:var(--warn); box-shadow:0 0 0 4px rgba(251,191,36,.12);}
+    .dot.ok{background:var(--good); box-shadow:0 0 0 4px rgba(52,211,153,.12);}
 
-    .title{
-      display:flex;
-      flex-direction:column;
-      gap: 6px;
-    }
-
-    h1{
-      margin:0;
-      font-size: 22px;
-      letter-spacing: 0.2px;
-      font-weight: 750;
-    }
-
-    .sub{
-      margin:0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      font-size: 13px;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .dot{
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--good);
-      box-shadow: 0 0 0 4px rgba(43,213,118,0.10);
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1.25fr 1fr;
-      gap: 14px;
-    }
+    .grid{display:grid; grid-template-columns: 1.25fr 1fr; gap:14px;}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.05));
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
+      background:linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.05));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
 
     .cardHeader{
-      padding: 12px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      border-bottom: 1px solid var(--border);
-      background: rgba(255,255,255,0.03);
+      padding:12px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+    }
+    .cardHeader strong{font-size:14px; letter-spacing:.2px;}
+    .headerTools{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+    .pill{
+      padding:4px 9px; border-radius:999px;
+      background:rgba(255,255,255,.06); border:1px solid var(--border);
+      color:var(--muted); font-size:12px;
     }
 
-    .cardHeader strong{
-      font-size: 14px;
-      letter-spacing: 0.2px;
+    .input{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:12px;
+      background:rgba(255,255,255,.06); border:1px solid var(--border);
+      color:var(--text);
+      min-width:220px;
     }
-
-    .count{
-      color: var(--muted);
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-    }
-
-    table{
+    .input input{
       width:100%;
-      border-collapse: collapse;
+      border:none; outline:none; background:transparent; color:var(--text);
+      font-size:13px;
     }
+
+    .select{
+      padding:8px 10px; border-radius:12px;
+      background:rgba(255,255,255,.06); border:1px solid var(--border);
+      color:var(--text); font-size:13px;
+      outline:none;
+    }
+
+    table{width:100%; border-collapse:collapse;}
     thead th{
       text-align:left;
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 650;
-      letter-spacing: 0.2px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(255,255,255,0.02);
+      font-size:12px; color:var(--muted); font-weight:700;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.02);
+      position:sticky; top:0;
     }
     tbody td{
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      font-size: 13px;
-      color: rgba(255,255,255,0.88);
-      vertical-align: middle;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      font-size:13px;
+      vertical-align:middle;
     }
-    tbody tr:hover{
-      background: rgba(124,156,255,0.08);
-      cursor: pointer;
-    }
-    tbody tr.active{
-      background: rgba(124,156,255,0.14);
-    }
+    tbody tr:hover{background:rgba(124,156,255,.08); cursor:pointer;}
+    tbody tr.active{background:rgba(124,156,255,.14);}
 
-    .mono{ font-family: var(--mono); font-size: 12.5px; }
-    .muted{ color: var(--muted); }
+    .mono{font-family:var(--mono); font-size:12.5px;}
+    .muted{color:var(--muted);}
+    .row1{display:flex; align-items:center; gap:10px;}
+    .name{font-size:12px; color:var(--muted); margin-top:2px;}
+    .statusDot{width:8px; height:8px; border-radius:50%; background:var(--good);}
+    .statusDot.warn{background:var(--warn);}
+    .statusDot.bad{background:var(--bad);}
 
-    .status{
-      display:flex;
-      align-items:center;
-      gap:8px;
+    .bar{
+      height:8px; border-radius:999px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
     }
-    .sDot{
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--good);
+    .bar > i{
+      display:block; height:100%;
+      width:0%;
+      background:rgba(124,156,255,.80);
     }
-    .sDot.warn{ background: var(--warn); }
-    .sDot.bad{ background: var(--bad); }
+    .bar.mem > i{ background: rgba(52,211,153,.80); }
+    .bar.disk > i{ background: rgba(251,191,36,.80); }
+
+    .sideTop{
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .selected{
+      display:flex; flex-direction:column; gap:4px; min-width:0;
+    }
+    .selected .label{font-size:12px; color:var(--muted);}
+    .badge{
+      font-family:var(--mono);
+      font-size:12px; font-weight:700;
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      max-width: 340px;
+    }
 
     .actions{
-      display:flex;
-      gap:10px;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
+      padding:12px 14px;
+      display:flex; gap:10px; flex-wrap:wrap;
+      border-bottom:1px solid var(--border);
     }
-
     button{
       appearance:none;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.92);
-      padding: 9px 12px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 650;
-      letter-spacing: 0.2px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.92);
+      padding:9px 12px;
+      border-radius:12px;
+      font-size:13px; font-weight:700;
       cursor:pointer;
       transition: transform .08s ease, background .15s ease, border-color .15s ease;
     }
-    button:hover{
-      background: rgba(255,255,255,0.10);
-      border-color: rgba(255,255,255,0.18);
+    button:hover{background:rgba(255,255,255,.10); border-color:rgba(255,255,255,.18);}
+    button:active{transform:translateY(1px);}
+    button.primary{background:rgba(124,156,255,.18); border-color:rgba(124,156,255,.38);}
+    button.ghost{background:transparent;}
+
+    .tabs{
+      display:flex; gap:8px; padding:10px 14px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.02);
     }
-    button:active{
-      transform: translateY(1px);
+    .tab{
+      padding:7px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      color:rgba(255,255,255,.85);
+      font-size:12.5px;
+      cursor:pointer;
+      user-select:none;
     }
-    button.primary{
-      background: rgba(124,156,255,0.18);
-      border-color: rgba(124,156,255,0.40);
-    }
-    button.danger{
-      background: rgba(255,93,93,0.14);
-      border-color: rgba(255,93,93,0.32);
+    .tab.active{
+      background:rgba(124,156,255,.18);
+      border-color:rgba(124,156,255,.40);
+      color:rgba(255,255,255,.92);
     }
 
-    .rightTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+    .pane{
+      display:none;
       padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(255,255,255,0.03);
     }
-
-    .selected{
-      display:flex;
-      flex-direction:column;
-      gap: 4px;
-      min-width: 0;
-    }
-    .selected .label{
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .selected .value{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      font-weight: 750;
-      letter-spacing: 0.2px;
-      font-size: 14px;
-      min-width: 0;
-    }
-    .badge{
-      font-family: var(--mono);
-      font-weight: 650;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-      overflow:hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 100%;
-    }
+    .pane.active{display:block;}
 
     pre{
       margin:0;
       padding: 12px 14px;
-      height: 520px;
+      height: 430px;
       overflow:auto;
-      background: linear-gradient(180deg, rgba(10,15,28,0.9), rgba(10,15,28,0.65));
-      color: rgba(255,255,255,0.9);
-      font-family: var(--mono);
-      font-size: 12.5px;
-      line-height: 1.35;
+      background:linear-gradient(180deg, rgba(10,15,28,.90), rgba(10,15,28,.65));
+      color:rgba(255,255,255,.92);
+      font-family:var(--mono);
+      font-size:12.5px;
+      line-height:1.35;
+      border-top:1px solid rgba(255,255,255,.06);
     }
+    @media (max-width: 980px){ pre{height:360px;} }
 
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
-      pre{ height: 420px; }
+    .kv{
+      display:grid; grid-template-columns: 140px 1fr;
+      gap:8px 12px;
+      font-size:13px;
+    }
+    .kv div:nth-child(odd){ color: var(--muted); }
+    .kv div:nth-child(even){ font-family: var(--mono); }
+
+    .empty{
+      padding: 18px 14px;
+      color: var(--muted);
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="top">
-      <div class="title">
+    <div class="topbar">
+      <div class="brand">
         <h1>PC Network Monitor</h1>
-        <p class="sub">Realtime monitoring dashboard</p>
+        <p class="sub">LAN monitoring dashboard</p>
       </div>
-      <div class="pill"><span class="dot"></span><span id="wsState">Connecting...</span></div>
+
+      <div class="rightbar">
+        <div class="chip"><span class="dot" id="wsDot"></span><span id="wsState">Connecting...</span></div>
+      </div>
     </div>
 
     <div class="grid">
       <div class="card">
         <div class="cardHeader">
           <strong>Clients</strong>
-          <span class="count" id="count">0</span>
+          <div class="headerTools">
+            <span class="pill" id="count">0</span>
+            <div class="input">
+              <span class="muted">🔎</span>
+              <input id="q" placeholder="Search by id / name / ip" autocomplete="off" />
+            </div>
+            <select id="sort" class="select">
+              <option value="seen">Sort: last seen</option>
+              <option value="cpu">Sort: CPU</option>
+              <option value="mem">Sort: MEM</option>
+              <option value="disk">Sort: DISK</option>
+            </select>
+          </div>
         </div>
-        <div style="overflow:auto;">
+
+        <div style="overflow:auto; max-height: 640px;">
           <table>
             <thead>
               <tr>
-                <th style="width:38%;">Client</th>
+                <th style="width:40%;">Client</th>
                 <th style="width:20%;">Address</th>
-                <th style="width:14%;">Seen</th>
-                <th style="width:9%;">CPU</th>
-                <th style="width:9%;">MEM</th>
-                <th style="width:10%;">DISK</th>
+                <th style="width:12%;">Seen</th>
+                <th style="width:28%;">Usage</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -368,24 +353,36 @@ INDEX_HTML = r"""<!doctype html>
       </div>
 
       <div class="card">
-        <div class="rightTop">
+        <div class="sideTop">
           <div class="selected">
             <div class="label">Selected</div>
-            <div class="value">
-              <span class="badge" id="selected">(none)</span>
-            </div>
+            <div class="badge" id="selected">(none)</div>
           </div>
-          <div class="status muted" id="selectedStatus" style="display:none;">
-            <span class="sDot" id="sDot"></span>
-            <span id="sText"></span>
-          </div>
+          <button class="ghost" onclick="copyActive()">Copy JSON</button>
         </div>
 
         <div class="actions">
           <button class="primary" onclick="sendReq('sysinfo')">Sysinfo</button>
           <button class="primary" onclick="sendReq('processes')">Processes</button>
           <button class="primary" onclick="sendReq('netstat')">Netstat</button>
-          <button class="danger" onclick="clearLog()">Clear</button>
+          <button onclick="clearAll()">Clear</button>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="tSys" onclick="setTab('tSys')">Sysinfo</div>
+          <div class="tab" data-tab="tProc" onclick="setTab('tProc')">Processes</div>
+          <div class="tab" data-tab="tNet" onclick="setTab('tNet')">Netstat</div>
+          <div class="tab" data-tab="tRaw" onclick="setTab('tRaw')">Raw</div>
+        </div>
+
+        <div class="pane active" id="tSys">
+          <div id="sysPane" class="empty">No data.</div>
+        </div>
+        <div class="pane" id="tProc">
+          <div id="procPane" class="empty">No data.</div>
+        </div>
+        <div class="pane" id="tNet">
+          <div id="netPane" class="empty">No data.</div>
         </div>
 
         <pre id="log"></pre>
@@ -396,92 +393,195 @@ INDEX_HTML = r"""<!doctype html>
 <script>
   let selectedClientId = "";
   let ws = null;
+
   let lastSnapshot = [];
+  const lastByTab = { sysinfo: null, processes: null, netstat: null };
+  let activeRaw = null;
 
   const el = (id) => document.getElementById(id);
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-  function fmtPct(v){
-    if (v === null || v === undefined) return "";
+  function pct(v){
+    if (v === null || v === undefined) return null;
     const n = Number(v);
-    if (Number.isNaN(n)) return "";
-    return n.toFixed(1);
+    if (Number.isNaN(n)) return null;
+    return clamp(n, 0, 100);
+  }
+  function fmt(v){
+    const p = pct(v);
+    return p === null ? "" : p.toFixed(1) + "%";
   }
 
   function statusFromSeen(seenSec){
-    // green: < 5s, yellow: < 15s, red: >= 15s
     if (seenSec < 5) return {cls:"", text:"online"};
     if (seenSec < 15) return {cls:"warn", text:"idle"};
     return {cls:"bad", text:"stale"};
   }
 
+  function setWsState(text, ok){
+    el("wsState").textContent = text;
+    const d = el("wsDot");
+    d.className = ok ? "dot ok" : "dot";
+  }
+
   function setSelected(cid){
     selectedClientId = cid || "";
     el("selected").textContent = selectedClientId || "(none)";
-    renderClients(lastSnapshot);
-    renderSelectedStatus();
+    renderClients();
   }
 
-  function renderSelectedStatus(){
-    const wrap = el("selectedStatus");
-    if (!selectedClientId){
-      wrap.style.display = "none";
-      return;
-    }
-    const item = lastSnapshot.find(x => x.client_id === selectedClientId);
-    if (!item){
-      wrap.style.display = "none";
-      return;
-    }
-    const s = statusFromSeen(item.last_seen_sec);
-    el("sDot").className = "sDot " + s.cls;
-    el("sText").textContent = s.text;
-    wrap.style.display = "flex";
-  }
-
-  function renderClients(clients){
-    lastSnapshot = clients || [];
-    el("count").textContent = String(lastSnapshot.length);
-
-    const tbody = el("tbody");
-    tbody.innerHTML = "";
-
-    for (const c of lastSnapshot){
-      const tr = document.createElement("tr");
-      if (c.client_id === selectedClientId) tr.classList.add("active");
-      tr.onclick = () => setSelected(c.client_id);
-
-      const m = c.metrics || {};
-      const seen = Number(c.last_seen_sec ?? 9999);
-      const st = statusFromSeen(seen);
-
-      tr.innerHTML = `
-        <td>
-          <div style="display:flex; flex-direction:column; gap:2px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span class="sDot ${st.cls}"></span>
-              <span class="mono">${c.client_id}</span>
-            </div>
-            <div class="muted" style="font-size:12px;">${c.name || ""}</div>
-          </div>
-        </td>
-        <td class="mono">${c.addr || ""}</td>
-        <td class="mono">${seen.toFixed(2)}s</td>
-        <td class="mono">${fmtPct(m.cpu_percent)}</td>
-        <td class="mono">${fmtPct(m.mem_percent)}</td>
-        <td class="mono">${fmtPct(m.disk_percent)}</td>
-      `;
-      tbody.appendChild(tr);
-    }
+  function clearAll(){
+    el("log").textContent = "";
+    el("sysPane").textContent = "No data.";
+    el("sysPane").className = "empty";
+    el("procPane").textContent = "No data.";
+    el("procPane").className = "empty";
+    el("netPane").textContent = "No data.";
+    el("netPane").className = "empty";
+    activeRaw = null;
+    lastByTab.sysinfo = null;
+    lastByTab.processes = null;
+    lastByTab.netstat = null;
   }
 
   function appendLog(line){
     const pre = el("log");
-    pre.textContent += line + "\\n";
+    pre.textContent += line + "\n";
     pre.scrollTop = pre.scrollHeight;
   }
 
-  function clearLog(){
-    el("log").textContent = "";
+  function setTab(tabId){
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".pane").forEach(p => p.classList.remove("active"));
+
+    document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add("active");
+    el(tabId).classList.add("active");
+
+    // Raw tab shows latest response JSON
+    if (tabId === "tRaw"){
+      const pre = el("log");
+      if (activeRaw) pre.textContent = JSON.stringify(activeRaw, null, 2) + "\n";
+    }
+  }
+
+  function copyActive(){
+    if (!activeRaw){
+      navigator.clipboard?.writeText("");
+      return;
+    }
+    navigator.clipboard?.writeText(JSON.stringify(activeRaw, null, 2));
+  }
+
+  function renderKV(targetId, obj){
+    const host = el(targetId);
+    if (!obj){
+      host.textContent = "No data.";
+      host.className = "empty";
+      return;
+    }
+    host.className = "";
+    const html = `
+      <div class="kv">
+        <div>Hostname</div><div>${(obj.hostname ?? "")}</div>
+        <div>OS</div><div>${(obj.os ?? "")}</div>
+        <div>Python</div><div>${(obj.python ?? "")}</div>
+        <div>Arch</div><div>${(obj.arch ?? "")}</div>
+        <div>CPU</div><div>${(obj.metrics?.cpu_percent ?? "")}%</div>
+        <div>Memory</div><div>${(obj.metrics?.mem_percent ?? "")}%</div>
+        <div>Disk</div><div>${(obj.metrics?.disk_percent ?? "")}%</div>
+      </div>`;
+    host.innerHTML = html;
+  }
+
+  function renderJSON(targetId, obj){
+    const host = el(targetId);
+    if (!obj){
+      host.textContent = "No data.";
+      host.className = "empty";
+      return;
+    }
+    host.className = "";
+    host.innerHTML = `<pre style="height:380px; border-radius:12px; margin:0;">${escapeHtml(JSON.stringify(obj, null, 2))}</pre>`;
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
+  }
+
+  function passesQuery(c, q){
+    if (!q) return true;
+    const hay = (c.client_id + " " + (c.name||"") + " " + (c.addr||"")).toLowerCase();
+    return hay.includes(q);
+  }
+
+  function renderClients(){
+    const q = (el("q").value || "").trim().toLowerCase();
+    const sortKey = el("sort").value;
+
+    let list = (lastSnapshot || []).filter(c => passesQuery(c, q));
+
+    const num = (x) => {
+      if (x === null || x === undefined) return -1;
+      const n = Number(x);
+      return Number.isNaN(n) ? -1 : n;
+    };
+
+    list.sort((a,b) => {
+      if (sortKey === "seen") return (a.last_seen_sec ?? 9999) - (b.last_seen_sec ?? 9999);
+      if (sortKey === "cpu") return num(b.metrics?.cpu_percent) - num(a.metrics?.cpu_percent);
+      if (sortKey === "mem") return num(b.metrics?.mem_percent) - num(a.metrics?.mem_percent);
+      if (sortKey === "disk") return num(b.metrics?.disk_percent) - num(a.metrics?.disk_percent);
+      return 0;
+    });
+
+    el("count").textContent = String(list.length);
+
+    const tbody = el("tbody");
+    tbody.innerHTML = "";
+
+    for (const c of list){
+      const tr = document.createElement("tr");
+      if (c.client_id === selectedClientId) tr.classList.add("active");
+      tr.onclick = () => setSelected(c.client_id);
+
+      const seen = Number(c.last_seen_sec ?? 9999);
+      const st = statusFromSeen(seen);
+
+      const cpu = pct(c.metrics?.cpu_percent);
+      const mem = pct(c.metrics?.mem_percent);
+      const disk = pct(c.metrics?.disk_percent);
+
+      tr.innerHTML = `
+        <td>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div class="row1">
+              <span class="statusDot ${st.cls}"></span>
+              <span class="mono">${c.client_id}</span>
+            </div>
+            <div class="name">${c.name || ""}</div>
+          </div>
+        </td>
+        <td class="mono">${c.addr || ""}</td>
+        <td class="mono">${seen.toFixed(2)}s</td>
+        <td>
+          <div style="display:grid; grid-template-columns: 54px 1fr; gap:6px 10px; align-items:center;">
+            <div class="muted mono">CPU</div>
+            <div class="bar"><i style="width:${cpu===null?0:cpu}%"></i></div>
+            <div class="muted mono">MEM</div>
+            <div class="bar mem"><i style="width:${mem===null?0:mem}%"></i></div>
+            <div class="muted mono">DISK</div>
+            <div class="bar disk"><i style="width:${disk===null?0:disk}%"></i></div>
+          </div>
+          <div class="muted mono" style="margin-top:6px;">
+            ${fmt(cpu)} · ${fmt(mem)} · ${fmt(disk)}
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
   }
 
   async function sendReq(reqType){
@@ -504,20 +604,37 @@ INDEX_HTML = r"""<!doctype html>
     appendLog(`[sent] ${reqType} -> ${selectedClientId} (${data.request_id})`);
   }
 
-  function setWsState(text, ok){
-    el("wsState").textContent = text;
-    const dot = document.querySelector(".dot");
-    dot.style.background = ok ? "var(--good)" : "var(--warn)";
-    dot.style.boxShadow = ok ? "0 0 0 4px rgba(43,213,118,0.10)" : "0 0 0 4px rgba(255,204,102,0.10)";
+  function onResponse(payload){
+    // payload: {client_id, request_id, payload:{...}}
+    activeRaw = payload;
+
+    // try to infer which pane should be updated
+    const inner = payload.payload || {};
+    // sysinfo usually contains hostname/os/python/arch
+    if (inner.hostname || inner.os || inner.python || inner.arch){
+      lastByTab.sysinfo = inner;
+      renderKV("sysPane", inner);
+      setTab("tSys");
+      return;
+    }
+    // processes: usually list-like
+    if (inner.processes || Array.isArray(inner) || inner.top){
+      lastByTab.processes = inner;
+      renderJSON("procPane", inner);
+      setTab("tProc");
+      return;
+    }
+    // netstat: connections
+    lastByTab.netstat = inner;
+    renderJSON("netPane", inner);
+    setTab("tNet");
   }
 
   function connectWS(){
     const proto = (location.protocol === "https:") ? "wss" : "ws";
     ws = new WebSocket(`${proto}://${location.host}/ws`);
 
-    ws.onopen = () => {
-      setWsState("Connected", true);
-    };
+    ws.onopen = () => setWsState("Connected", true);
 
     ws.onclose = () => {
       setWsState("Reconnecting...", false);
@@ -528,23 +645,25 @@ INDEX_HTML = r"""<!doctype html>
       const msg = JSON.parse(ev.data);
 
       if (msg.type === "snapshot"){
-        renderClients(msg.payload.clients || []);
-        renderSelectedStatus();
-      }
-
-      if (msg.type === "response"){
+        lastSnapshot = msg.payload.clients || [];
+        renderClients();
+      } else if (msg.type === "response"){
         const p = msg.payload || {};
         appendLog(`[response] ${p.client_id} (${p.request_id})`);
-        appendLog(JSON.stringify(p.payload, null, 2));
+        onResponse(p);
       }
     };
   }
+
+  el("q").addEventListener("input", () => renderClients());
+  el("sort").addEventListener("change", () => renderClients());
 
   connectWS();
 </script>
 </body>
 </html>
 """
+
 
 
 @app.get("/", response_class=HTMLResponse)
