@@ -19,7 +19,7 @@ from src.shared.protocol import (
 )
 
 ResponseCallback = Callable[[str, Optional[str], dict], Awaitable[None]]
-
+ 
 
 @dataclass
 class ClientState:
