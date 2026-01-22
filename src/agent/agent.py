@@ -8,12 +8,13 @@ import platform
 import socket
 import ssl
 import time
-from typing import Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, Optional, Tuple
 
 try:
-    import psutil  
+    import psutil 
 except Exception:
-    psutil = None
+    psutil = None  
 
 from src.shared.protocol import (
     TCP_SERVER_PORT,
@@ -25,8 +26,25 @@ from src.shared.protocol import (
     PROTOCOL_VERSION,
 )
 
+DISCOVERY_MAGIC = b"DISCOVER_PC_MONITOR"
+HEARTBEAT_INTERVAL_S = 2.0
+METRICS_INTERVAL_S = 2.0
 
-def get_basic_sysinfo():
+RECONNECT_BASE_S = 0.5
+RECONNECT_MAX_S = 15.0
+
+
+@dataclass(frozen=True)
+class AgentConfig:
+    server_host: str
+    server_port: int
+    auth_token: str
+    name: str
+    client_id: str
+    use_tls: bool
+
+
+def get_basic_sysinfo() -> Dict[str, Any]:
     """
     Trả về thông tin hệ điều hành CHUẨN.
     Windows 11 được xác định theo OS Build >= 22000
@@ -36,7 +54,7 @@ def get_basic_sysinfo():
 
     if platform.system().lower() == "windows":
         try:
-            import winreg
+            import winreg  
 
             key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path) as key:
@@ -62,50 +80,63 @@ def get_basic_sysinfo():
     }
 
 
-
-def get_metrics():
+def get_metrics() -> Dict[str, Any]:
     if psutil is None:
         return {"cpu_percent": None, "mem_percent": None, "disk_percent": None}
-    return {
-        "cpu_percent": psutil.cpu_percent(interval=0.2),
-        "mem_percent": psutil.virtual_memory().percent,
-        "disk_percent": psutil.disk_usage(os.path.abspath(os.sep)).percent,
-    }
+
+    try:
+        cpu = psutil.cpu_percent(interval=0.2)
+        mem = psutil.virtual_memory().percent
+        disk = psutil.disk_usage(os.path.abspath(os.sep)).percent
+        return {"cpu_percent": cpu, "mem_percent": mem, "disk_percent": disk}
+    except Exception:
+        return {"cpu_percent": None, "mem_percent": None, "disk_percent": None}
 
 
-def get_processes_top(n: int = 30):
+def get_processes_top(n: int = 30) -> Any:
     if psutil is None:
         return {"error": "psutil not installed"}
+
     procs = []
-    for p in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
-        try:
-            info = p.info
-            procs.append(info)
-        except Exception:
-            pass
-    procs.sort(key=lambda x: (x.get("cpu_percent") or 0), reverse=True)
-    return procs[:n]
+    try:
+        for p in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
+            try:
+                procs.append(p.info)
+            except Exception:
+                pass
+        procs.sort(key=lambda x: (x.get("cpu_percent") or 0), reverse=True)
+        return procs[:n]
+    except Exception as e:
+        return {"error": f"failed to list processes: {e}"}
 
 
-def get_net_connections_summary(limit: int = 50):
+def get_net_connections_summary(limit: int = 50) -> Any:
     if psutil is None:
         return {"error": "psutil not installed"}
+
     conns = []
-    for c in psutil.net_connections(kind="inet"):
-        try:
-            laddr = f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else ""
-            raddr = f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else ""
-            conns.append({
-                "fd": c.fd,
-                "type": str(c.type),
-                "status": c.status,
-                "laddr": laddr,
-                "raddr": raddr,
-                "pid": c.pid,
-            })
-        except Exception:
-            pass
-    return conns[:limit]
+    try:
+        for c in psutil.net_connections(kind="inet"):
+            try:
+                laddr = f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else ""
+                raddr = f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else ""
+                conns.append(
+                    {
+                        "fd": c.fd,
+                        "type": str(c.type),
+                        "status": c.status,
+                        "laddr": laddr,
+                        "raddr": raddr,
+                        "pid": c.pid,
+                    }
+                )
+                if len(conns) >= limit:
+                    break
+            except Exception:
+                pass
+        return conns
+    except Exception as e:
+        return {"error": f"failed to list connections: {e}"}
 
 
 async def discover_server(timeout: float = 2.0) -> Optional[Tuple[str, int]]:
@@ -113,16 +144,19 @@ async def discover_server(timeout: float = 2.0) -> Optional[Tuple[str, int]]:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.settimeout(timeout)
-    msg = b"DISCOVER_PC_MONITOR"
+
     try:
-        sock.sendto(msg, ("255.255.255.255", UDP_DISCOVERY_PORT))
+        sock.sendto(DISCOVERY_MAGIC, ("255.255.255.255", UDP_DISCOVERY_PORT))
         data, addr = sock.recvfrom(2048)
         payload = json.loads(data.decode("utf-8"))
         return addr[0], int(payload.get("tcp_port", TCP_SERVER_PORT))
     except Exception:
         return None
     finally:
-        sock.close()
+        try:
+            sock.close()
+        except Exception:
+            pass
 
 
 def build_ssl_context() -> ssl.SSLContext:
@@ -132,69 +166,164 @@ def build_ssl_context() -> ssl.SSLContext:
     return ctx
 
 
-async def run_agent(server_host: str, server_port: int, auth_token: str, name: str, client_id: str, use_tls: bool):
-    ssl_ctx = build_ssl_context() if use_tls else None
-    reader, writer = await asyncio.open_connection(server_host, server_port, ssl=ssl_ctx)
-    writer.write(dumps({
-        "v": PROTOCOL_VERSION,
-        "type": "auth",
-        "payload": {
-            "token": auth_token,
-            "client_id": client_id,
-            "name": name,
-            "sysinfo": get_basic_sysinfo(),
+def _pack_auth(cfg: AgentConfig) -> bytes:
+    return dumps(
+        {
+            "v": PROTOCOL_VERSION,
+            "type": "auth",
+            "payload": {
+                "token": cfg.auth_token,
+                "client_id": cfg.client_id,
+                "name": cfg.name,
+                "sysinfo": get_basic_sysinfo(),
+            },
         }
-    }))
+    )
+
+
+def _pack_heartbeat() -> bytes:
+    return dumps({"v": PROTOCOL_VERSION, "type": "heartbeat", "payload": {"t": time.time()}})
+
+
+def _pack_metrics() -> bytes:
+    return dumps({"v": PROTOCOL_VERSION, "type": "metrics", "payload": get_metrics()})
+
+
+def _pack_response(request_id: Any, payload: Dict[str, Any]) -> bytes:
+    return dumps(
+        {
+            "v": PROTOCOL_VERSION,
+            "type": "response",
+            "request_id": request_id,
+            "payload": payload,
+        }
+    )
+
+
+async def _authenticate(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, cfg: AgentConfig) -> None:
+    writer.write(_pack_auth(cfg))
     await writer.drain()
+
     line = await reader.readline()
     if not line:
-        raise RuntimeError("server closed")
+        raise RuntimeError("server closed during auth")
+
     resp = loads(line)
     if resp.get("type") != "auth_ok":
         raise RuntimeError(f"auth failed: {resp}")
-    print(f"[+] Connected & authenticated to {server_host}:{server_port} as {client_id}")
 
-    async def send_loop():
-        while True:
-             writer.write(
-                dumps({
-                    "v": PROTOCOL_VERSION,
-                    "type": "heartbeat",
-                    "payload": {"t": time.time()},
-                }) +
-                dumps({
-                    "v": PROTOCOL_VERSION,
-                    "type": "metrics",
-                    "payload": get_metrics(),
-                })
-            )
+
+async def _send_loop(writer: asyncio.StreamWriter, stop: asyncio.Event) -> None:
+    """
+    Gửi heartbeat + metrics định kỳ.
+    Tách interval vẫn đồng bộ 2s; nếu bạn muốn khác nhau, có thể tách 2 task.
+    """
+    next_hb = time.monotonic()
+    next_metrics = time.monotonic()
+
+    while not stop.is_set():
+        now = time.monotonic()
+        out = b""
+
+        if now >= next_hb:
+            out += _pack_heartbeat()
+            next_hb = now + HEARTBEAT_INTERVAL_S
+
+        if now >= next_metrics:
+            out += _pack_metrics()
+            next_metrics = now + METRICS_INTERVAL_S
+
+        if out:
+            writer.write(out)
             await writer.drain()
-            await asyncio.sleep(2.0)
 
-    async def recv_loop():
-        while True:
-            line = await reader.readline()
-            if not line:
-                break
+        await asyncio.sleep(0.1)
+
+
+async def _recv_loop(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, stop: asyncio.Event) -> None:
+    while not stop.is_set():
+        line = await reader.readline()
+        if not line:
+            break
+
+        try:
             msg = loads(line)
-            if msg.get("type") == "request":
-                rid = msg.get("request_id")
-                req_type = msg.get("payload", {}).get("req_type")
-                if req_type == "sysinfo":
-                    payload = {"sysinfo": get_basic_sysinfo(), "metrics": get_metrics()}
-                elif req_type == "processes":
-                    payload = {"processes": get_processes_top(30)}
-                elif req_type == "netstat":
-                    payload = {"connections": get_net_connections_summary(50)}
-                else:
-                    payload = {"error": f"unknown req_type: {req_type}"}
-                writer.write(dumps({"v": PROTOCOL_VERSION, "type": "response", "request_id": rid, "payload": payload}))
-                await writer.drain()
+        except Exception:
+            continue
 
-    await asyncio.gather(send_loop(), recv_loop())
+        if msg.get("type") != "request":
+            continue
+
+        rid = msg.get("request_id")
+        req_type = (msg.get("payload") or {}).get("req_type")
+
+        if req_type == "sysinfo":
+            payload = {"sysinfo": get_basic_sysinfo(), "metrics": get_metrics()}
+        elif req_type == "processes":
+            payload = {"processes": get_processes_top(30)}
+        elif req_type == "netstat":
+            payload = {"connections": get_net_connections_summary(50)}
+        else:
+            payload = {"error": f"unknown req_type: {req_type}"}
+
+        try:
+            writer.write(_pack_response(rid, payload))
+            await writer.drain()
+        except Exception:
+            break
 
 
-async def main():
+async def run_agent_once(cfg: AgentConfig) -> None:
+    ssl_ctx = build_ssl_context() if cfg.use_tls else None
+    reader, writer = await asyncio.open_connection(cfg.server_host, cfg.server_port, ssl=ssl_ctx)
+
+    try:
+        await _authenticate(reader, writer, cfg)
+        print(f"[+] Connected & authenticated to {cfg.server_host}:{cfg.server_port} as {cfg.client_id}")
+
+        stop = asyncio.Event()
+        send_task = asyncio.create_task(_send_loop(writer, stop), name="send_loop")
+        recv_task = asyncio.create_task(_recv_loop(reader, writer, stop), name="recv_loop")
+
+        done, pending = await asyncio.wait(
+            {send_task, recv_task},
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+
+        stop.set()
+        for t in pending:
+            t.cancel()
+        await asyncio.gather(*pending, return_exceptions=True)
+
+        for t in done:
+            exc = t.exception()
+            if exc:
+                raise exc
+
+    finally:
+        try:
+            writer.close()
+            await writer.wait_closed()
+        except Exception:
+            pass
+
+
+async def run_agent_forever(cfg: AgentConfig) -> None:
+    backoff = RECONNECT_BASE_S
+    while True:
+        try:
+            await run_agent_once(cfg)
+            backoff = RECONNECT_BASE_S
+            await asyncio.sleep(backoff)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            print(f"[!] Disconnected: {e}. Reconnecting in {backoff:.1f}s...")
+            await asyncio.sleep(backoff)
+            backoff = min(RECONNECT_MAX_S, backoff * 2)
+
+
+async def main() -> None:
     ap = argparse.ArgumentParser(description="PC Network Monitor - Agent")
     ap.add_argument("--server-host", default="")
     ap.add_argument("--server-port", type=int, default=TCP_SERVER_PORT)
@@ -217,7 +346,16 @@ async def main():
         server_host, server_port = found
         print(f"[UDP] Discovered server: {server_host}:{server_port}")
 
-    await run_agent(server_host, server_port, args.auth_token, args.name, client_id, args.tls)
+    cfg = AgentConfig(
+        server_host=server_host,
+        server_port=server_port,
+        auth_token=args.auth_token,
+        name=args.name,
+        client_id=client_id,
+        use_tls=args.tls,
+    )
+
+    await run_agent_forever(cfg)
 
 
 if __name__ == "__main__":
